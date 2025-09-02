@@ -1,0 +1,26 @@
+# AI 모델 설정
+# OpenAI API 사용 시
+AI_DEPLOY_MODEL=gpt-4
+AI_API_KEY=your_openai_api_key_here
+AI_ENDPOINT=https://api.openai.com/v1/chat/completions
+
+# Azure OpenAI 사용 시 (권장)
+AI_DEPLOY_MODEL=your-deployment-name
+AI_API_KEY=your_azure_api_key_here
+AI_ENDPOINT=https://your-resource.openai.azure.com/
+
+# Azure OpenAI 전체 URL 사용 시
+# AI_ENDPOINT=https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-12-01-preview
+
+# 주의사항:
+# 1. Azure OpenAI 사용 시 AI_ENDPOINT는 리소스 URL만 입력 (예: https://your-resource.openai.azure.com/)
+# 2. AI_DEPLOY_MODEL은 실제 배포된 모델 이름과 동일해야 함
+# 3. API 키는 Azure Portal에서 확인 가능
+# 4. gpt-5-mini 모델 사용 시 max_completion_tokens 사용 (max_tokens 아님)
+# 5. gpt-5-mini 모델은 temperature, top_p, frequency_penalty, presence_penalty 설정 불가 (기본값만 사용)
+
+# Anthropic Claude
+# AI_ENDPOINT=https://api.anthropic.com/v1/messages
+
+# LLM 질의 제한 설정 (비용 절약)
+llm_query_id_limit=5

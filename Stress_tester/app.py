@@ -311,8 +311,12 @@ with tabs[0]:
     csv_file = st.file_uploader("CSV 파일 업로드", type=["csv"]) 
     df = None
     if csv_file is not None:
-        df = pd.read_csv(csv_file)
-        st.dataframe(df.head(10), use_container_width=True)
+        try:
+            df = pd.read_csv(csv_file)
+            st.dataframe(df.head(10), use_container_width=True)
+        except Exception as e:
+            st.error(f"CSV 파일 읽기 오류: {e}")
+            df = None
 
     st.markdown("---")
     col0, col1, col2, col3, col4 = st.columns(5)
@@ -343,7 +347,23 @@ with tabs[0]:
         st.session_state["concurrency"] = concurrency
         st.session_state["capture_preview"] = capture_preview
         if df is not None:
-            st.session_state["csv_rows"] = df.to_dict(orient="records")
+            try:
+                # pandas 버전 호환성을 위한 안전한 변환
+                st.session_state["csv_rows"] = df.to_dict(orient="records")
+            except Exception as e:
+                # pandas 버전 호환성 문제 대비 대안 방법들
+                try:
+                    # 방법 1: iterrows 사용
+                    st.session_state["csv_rows"] = [row.to_dict() for _, row in df.iterrows()]
+                except Exception as e2:
+                    # 방법 2: 수동 변환 (최후의 수단)
+                    st.session_state["csv_rows"] = []
+                    for i in range(len(df)):
+                        row_dict = {}
+                        for col in df.columns:
+                            row_dict[col] = df.iloc[i][col]
+                        st.session_state["csv_rows"].append(row_dict)
+                    st.warning(f"pandas 호환성 문제로 수동 변환을 사용했습니다: {e2}")
         st.success("설정을 저장했습니다.")
 
 

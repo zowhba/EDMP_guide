@@ -1,0 +1,14 @@
+[server]
+# 파일 업로드 최대 크기 설정 (300MB)
+maxUploadSize = 300
+
+[theme]
+# 기본 테마 설정
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+
+[browser]
+# 브라우저 설정
+gatherUsageStats = false

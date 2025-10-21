@@ -13,7 +13,14 @@ CSV 변수 치환 + cURL 템플릿 기반 REST 부하 테스트 도구
 
 ### 1. 의존성 설치
 
-#### 자동 설치 (권장)
+#### CentOS 7 환경 (권장)
+```bash
+# CentOS 7 전용 설치 스크립트
+chmod +x install_centos7.sh
+./install_centos7.sh
+```
+
+#### 자동 설치 (일반 환경)
 ```bash
 chmod +x install.sh
 ./install.sh

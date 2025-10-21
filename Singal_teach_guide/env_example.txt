@@ -1,0 +1,17 @@
+# OpenAI API 엔드포인트
+ENDPOINT=https://api.openai.com/v1/
+
+# OpenAI API 키
+API_KEY=your-api-key-here
+
+# 임베딩 모델
+DEPLOY_EMBED=text-embedding-ada-002
+
+# ChromaDB 저장 경로 (상대경로)
+CHROMA_DB_PATH=./chroma_db
+
+# 모델 이름
+DEPLOY_MODEL_NAME=gpt-3.5-turbo
+
+# 모델 버전
+DEPLOY_MODEL_VERSION=latest

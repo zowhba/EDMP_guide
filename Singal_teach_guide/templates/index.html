@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG ChromaDB 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #fff;
+            padding: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            text-align: center;
+        }
+        
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #1d1d1f;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #6e6e73;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #0077ed;
+        }
+        
+        .btn:disabled {
+            background-color: #d2d2d7;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background-color: #ff3b30;
+        }
+        
+        .btn-danger:hover {
+            background-color: #ff453a;
+        }
+        
+        .btn-secondary {
+            background-color: #86868b;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #6e6e73;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-list {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f7;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .advanced-options {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f5f5f7;
+            border-radius: 8px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .result-item {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f5f5f7;
+            border-radius: 8px;
+            border-left: 4px solid #0071e3;
+        }
+        
+        .result-score {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #0071e3;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .result-content {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        
+        .result-metadata {
+            font-size: 14px;
+            color: #6e6e73;
+            margin-top: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #0071e3;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6e6e73;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #0071e3;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #d1f7d1;
+            color: #0a5d0a;
+            border: 1px solid #a3e5a3;
+        }
+        
+        .message.error {
+            background-color: #ffd1d1;
+            color: #8b0000;
+            border: 1px solid #ff9999;
+        }
+        
+        @media (max-width: 768px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🚀 RAG ChromaDB 시스템</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="message" class="message"></div>
+        
+        <!-- URL 입력 섹션 -->
+        <div class="card">
+            <h2>📍 URL 추가</h2>
+            <div class="input-group">
+                <label for="urls">URL 입력 (한 줄에 하나씩)</label>
+                <textarea id="urls" placeholder="https://example.com&#10;https://another-site.com"></textarea>
+            </div>
+            
+            <!-- 파일 업로드 섹션 -->
+            <div class="input-group">
+                <label>📁 또는 파일 업로드</label>
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary">파일 선택</button>
+                    <input type="file" id="files" multiple accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.md,.csv">
+                </div>
+                <div id="fileList" class="file-list" style="display:none;"></div>
+            </div>
+            
+            <!-- 고급 옵션 -->
+            <details>
+                <summary style="cursor: pointer; margin-bottom: 10px;">⚙️ 고급 옵션</summary>
+                <div class="advanced-options">
+                    <div class="options-grid">
+                        <div class="input-group">
+                            <label for="chunkSize">청크 크기</label>
+                            <input type="number" id="chunkSize" value="600" min="100" max="2000">
+                        </div>
+                        <div class="input-group">
+                            <label for="chunkOverlap">청크 오버랩</label>
+                            <input type="number" id="chunkOverlap" value="50" min="0" max="300">
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <button id="processBtn" class="btn">🔄 추출 후 저장</button>
+            <div id="processLoading" class="loading">
+                <div class="spinner"></div>
+                <p>처리 중입니다...</p>
+            </div>
+        </div>
+        
+        <!-- 유사도 검색 섹션 -->
+        <div class="card">
+            <h2>🔍 유사도 검색</h2>
+            <div class="input-group">
+                <label for="searchQuery">검색어</label>
+                <input type="text" id="searchQuery" placeholder="검색할 내용을 입력하세요">
+            </div>
+            <div class="input-group">
+                <label for="numResults">결과 개수</label>
+                <input type="number" id="numResults" value="5" min="1" max="20">
+            </div>
+            <div class="input-group">
+                <label for="minSimilarity">최소 유사도 (以上만 표시)</label>
+                <input type="range" id="minSimilarity" min="0" max="1" step="0.1" value="0.3">
+                <span id="similarityValue">30%</span>
+            </div>
+            <button id="searchBtn" class="btn">🔎 유사도 검색</button>
+            <button id="debugBtn" class="btn btn-secondary" style="margin-left: 10px;">🔍 디버깅 검색</button>
+            <div id="searchLoading" class="loading">
+                <div class="spinner"></div>
+                <p>검색 중입니다...</p>
+            </div>
+            
+            <div id="searchResults" style="margin-top: 20px; display: none;">
+                <h3>검색 결과</h3>
+                <div id="resultsContainer"></div>
+            </div>
+        </div>
+        
+        <!-- 데이터베이스 관리 섹션 -->
+        <div class="card">
+            <h2>🗄️ 데이터베이스 관리</h2>
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalChunks">0</div>
+                    <div class="stat-label">전체 청크 수</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="processedUrls">0</div>
+                    <div class="stat-label">처리된 URL</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="clearBtn" class="btn btn-danger" onclick="confirmClear()">🗑️ 데이터베이스 초기화</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 파일 선택 처리
+        document.getElementById('files').addEventListener('change', function(e) {
+            const fileList = document.getElementById('fileList');
+            const files = Array.from(e.target.files);
+            
+            if (files.length > 0) {
+                fileList.style.display = 'block';
+                fileList.innerHTML = `<strong>선택된 파일:</strong><br>${files.map(f => f.name).join('<br>')}`;
+            } else {
+                fileList.style.display = 'none';
+            }
+        });
+        
+        // 파일 선택 버튼 클릭
+        document.querySelector('.file-input-wrapper button').addEventListener('click', function() {
+            document.getElementById('files').click();
+        });
+        
+        // 메시지 표시 함수
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        // URL/파일 처리
+        document.getElementById('processBtn').addEventListener('click', async function() {
+            const urls = document.getElementById('urls').value.trim().split('\n').filter(url => url.trim());
+            const files = document.getElementById('files').files;
+            const chunkSize = parseInt(document.getElementById('chunkSize').value);
+            const chunkOverlap = parseInt(document.getElementById('chunkOverlap').value);
+            
+            if (urls.length === 0 && files.length === 0) {
+                showMessage('URL을 입력하거나 파일을 선택해주세요.', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('processLoading');
+            const btn = document.getElementById('processBtn');
+            loading.style.display = 'block';
+            btn.disabled = true;
+            
+            try {
+                // URL 처리
+                if (urls.length > 0) {
+                    const response = await fetch('/api/process_urls', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            urls: urls,
+                            chunk_size: chunkSize,
+                            chunk_overlap: chunkOverlap
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        showMessage(result.message, 'success');
+                        if (result.details.skipped_urls.length > 0) {
+                            showMessage(`이미 처리된 URL: ${result.details.skipped_urls.join(', ')}`, 'error');
+                        }
+                    } else {
+                        showMessage(result.message, 'error');
+                    }
+                }
+                
+                // 파일 처리
+                if (files.length > 0) {
+                    const formData = new FormData();
+                    for (let file of files) {
+                        formData.append('files', file);
+                    }
+                    formData.append('chunk_size', chunkSize);
+                    formData.append('chunk_overlap', chunkOverlap);
+                    
+                    const response = await fetch('/api/upload_files', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        showMessage(result.message, 'success');
+                    } else {
+                        showMessage(result.message, 'error');
+                    }
+                }
+                
+                // 통계 업데이트
+                updateStats();
+                
+                // 입력 필드 초기화
+                document.getElementById('urls').value = '';
+                document.getElementById('files').value = '';
+                document.getElementById('fileList').style.display = 'none';
+                
+            } catch (error) {
+                showMessage(`오류 발생: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        
+        // 유사도 슬라이더 업데이트
+        document.getElementById('minSimilarity').addEventListener('input', function(e) {
+            const value = Math.round(e.target.value * 100);
+            document.getElementById('similarityValue').textContent = value + '%';
+        });
+        
+        // 유사도 검색
+        document.getElementById('searchBtn').addEventListener('click', async function() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const numResults = parseInt(document.getElementById('numResults').value);
+            const minSimilarity = parseFloat(document.getElementById('minSimilarity').value);
+            
+            if (!query) {
+                showMessage('검색어를 입력해주세요.', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('searchLoading');
+            const btn = document.getElementById('searchBtn');
+            loading.style.display = 'block';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        n_results: numResults,
+                        min_similarity: minSimilarity
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    displaySearchResults(result.results, result.total_results, result.min_similarity_threshold);
+                } else {
+                    showMessage(result.message, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`검색 오류: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        
+        // 디버깅 검색
+        document.getElementById('debugBtn').addEventListener('click', async function() {
+            const query = document.getElementById('searchQuery').value.trim();
+            
+            if (!query) {
+                showMessage('검색어를 입력해주세요.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/debug_search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // 디버깅 정보를 콘솔에 출력
+                    console.log('=== 디버깅 정보 ===');
+                    console.log('검색어:', result.query);
+                    console.log('데이터베이스 통계:', result.database_stats);
+                    console.log('임베딩 차원:', result.query_embedding_dimension);
+                    console.log('임베딩 샘플 (5개):', result.query_embedding_sample);
+                    console.log('원본 거리 값:', result.raw_distances);
+                    console.log('처리된 결과:', result.processed_results);
+                    console.log('추가 디버깅 정보:', result.debug_info);
+                    
+                    // UI에도 간단한 디버깅 정보 표시
+                    const debugInfo = `
+                        <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; font-family: monospace; font-size: 12px;">
+                            <h4>🔍 디버깅 정보</h4>
+                            <p><strong>검색어:</strong> ${result.query}</p>
+                            <p><strong>DB 문서 수:</strong> ${result.database_stats.total_chunks}</p>
+                            <p><strong>임베딩 차원:</strong> ${result.query_embedding_dimension}</p>
+                            <p><strong>원본 거리 값:</strong> [${result.raw_distances.map(d => d.toFixed(4)).join(', ')}]</p>
+                            <p><strong>자세한 내용은 콘솔을 확인하세요.</strong></p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('resultsContainer').innerHTML = debugInfo;
+                    document.getElementById('searchResults').style.display = 'block';
+                    
+                    showMessage('디버깅 정보가 콘솔에 출력되었습니다. F12를 눌러 확인하세요.', 'success');
+                } else {
+                    showMessage(result.message, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`디버깅 오류: ${error.message}`, 'error');
+            }
+        });
+        
+        // 검색 결과 표시
+        function displaySearchResults(results, totalResults, minThreshold) {
+            const container = document.getElementById('resultsContainer');
+            const resultsDiv = document.getElementById('searchResults');
+            
+            // 검색 정보 표시
+            let headerInfo = `<div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 8px;">`;
+            headerInfo += `<strong>검색 결과:</strong> ${totalResults}개 발견`;
+            headerInfo += ` (최소 유사도: ${Math.round(minThreshold * 100)}% 이상)</div>`;
+            
+            if (results.length === 0) {
+                container.innerHTML = headerInfo + '<p>설정된 최소 유사도 이상의 결과가 없습니다. 최소 유사도를 낮춰보세요.</p>';
+            } else {
+                const resultsHtml = results.map((result, index) => {
+                    const scoreColor = result.similarity_score >= 0.8 ? '#28a745' : 
+                                      result.similarity_score >= 0.6 ? '#ffc107' : '#dc3545';
+                    
+                    return `
+                        <div class="result-item">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span class="result-score" style="background-color: ${scoreColor}">
+                                    유사도: ${(result.similarity_score * 100).toFixed(1)}%
+                                </span>
+                                <span style="font-size: 12px; color: #666;">
+                                    관련도: ${result.relevance_level || '보통'}
+                                </span>
+                            </div>
+                            <div class="result-content">
+                                ${result.document}
+                            </div>
+                            <div class="result-metadata">
+                                <strong>출처:</strong> ${result.metadata.source}<br>
+                                <strong>청크:</strong> ${result.metadata.chunk_index + 1}/${result.metadata.total_chunks}<br>
+                                <strong>거리 점수:</strong> ${result.distance.toFixed(4)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.innerHTML = headerInfo + resultsHtml;
+            }
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        // 데이터베이스 초기화 확인
+        function confirmClear() {
+            if (confirm('정말로 데이터베이스를 초기화하시겠습니까? 모든 데이터가 삭제됩니다.')) {
+                clearDatabase();
+            }
+        }
+        
+        // 데이터베이스 초기화
+        async function clearDatabase() {
+            try {
+                const response = await fetch('/api/clear_database', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showMessage(result.message, 'success');
+                    updateStats();
+                    document.getElementById('searchResults').style.display = 'none';
+                } else {
+                    showMessage(result.message, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`초기화 오류: ${error.message}`, 'error');
+            }
+        }
+        
+        // 통계 업데이트
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    document.getElementById('totalChunks').textContent = result.stats.total_chunks;
+                    document.getElementById('processedUrls').textContent = result.stats.processed_urls;
+                }
+            } catch (error) {
+                console.error('통계 업데이트 오류:', error);
+            }
+        }
+        
+        // 페이지 로드 시 통계 업데이트
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+        });
+        
+        // Enter 키로 검색
+        document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
